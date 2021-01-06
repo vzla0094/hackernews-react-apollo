@@ -1,5 +1,23 @@
 import React, { useState } from "react";
 import { useHistory } from "react-router";
+import { useMutation, gql } from "@apollo/client";
+import { AUTH_TOKEN } from "../constants";
+
+const SIGNUP_MUTATION = gql`
+  mutation SignupMutation($email: String!, $password: String!, $name: String!) {
+    signup(email: $email, password: $password, name: $name) {
+      token
+    }
+  }
+`;
+
+const LOGIN_MUTATION = gql`
+  mutation LoginMutation($email: String!, $password: String!) {
+    login(email: $email, password: $password) {
+      token
+    }
+  }
+`;
 
 const Login = () => {
   const history = useHistory();
@@ -8,6 +26,29 @@ const Login = () => {
     email: "",
     password: "",
     name: "",
+  });
+
+  const [login] = useMutation(LOGIN_MUTATION, {
+    variables: {
+      email: formState.email,
+      password: formState.password,
+    },
+    onCompleted: ({ login }) => {
+      localStorage.setItem(AUTH_TOKEN, login.token);
+      history.push("/");
+    },
+  });
+
+  const [signup] = useMutation(SIGNUP_MUTATION, {
+    variables: {
+      email: formState.email,
+      password: formState.password,
+      name: formState.name,
+    },
+    onCompleted: ({ signup }) => {
+      localStorage.setItem(AUTH_TOKEN, signup.token);
+      history.push("/");
+    },
   });
 
   return (
@@ -53,7 +94,7 @@ const Login = () => {
       <div className="flex mt3">
         <button
           className="pointer mr2 button"
-          onClick={() => console.log("onClick")}
+          onClick={formState.login ? login : signup}
         >
           {formState.login ? "login" : "create account"}
         </button>
